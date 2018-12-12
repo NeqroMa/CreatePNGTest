@@ -206,6 +206,20 @@ def build_palette_dictionary(palette_fname):
     """
     my_palette_dict = dict()
 
+    with open (palette_fname, 'r') as f:
+
+        palette_reader = csv.reader(f)
+
+        for row in palette_reader:
+            key = int(row[0])
+            value_red = row[1]
+            value_green = row[2]
+            value_blue = row[3]
+
+            value = (value_red, value_green, value_blue)
+
+            my_palette_dict[key] = value
+
     return my_palette_dict
 
 
@@ -214,7 +228,7 @@ def build_image_using_palette(img_fname, palette_dict):
     TROPHY
     use the palette_dict as a dictionary to look up colors
     key is an int (0-354) and the value is a 3-tuple of RGB
-    Red if first element, Green is 2nd element, Blue is 3rd element
+    Red is first element, Green is 2nd element, Blue is 3rd element
 
     Use this dictionary to determine the color of each pixel
     as follow:
@@ -232,4 +246,26 @@ def build_image_using_palette(img_fname, palette_dict):
     Now, using the value, find the RGB color in the palette.  Set the
     pixel to that color
     """
-    pass
+    my_image = Image.new('RGB', (512,512))
+    my_image_pixels = my_image.load()
+
+    image_x_size_loaded = my_image.size[0]
+    image_y_size_loaded = my_image.size[1]
+
+
+    for x in range(image_x_size_loaded):
+        for y in range(image_y_size_loaded):
+
+            x_squared = x**2
+            y_squared = y**2
+            abs_x_sq_and_y_sq = abs(x_squared - y_squared)
+            multiply = 2(x*y)
+            addition = multiply + abs_x_sq_and_y_sq
+            square_root = int(sqr(addition))
+            final_calc = square_root % 355
+
+
+            my_image_pixels[x, y] = pixel_color
+
+    print(f'saving {img_fname}')
+    my_image.save(img_fname, 'png')
