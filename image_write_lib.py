@@ -212,9 +212,9 @@ def build_palette_dictionary(palette_fname):
 
         for row in palette_reader:
             key = int(row[0])
-            value_red = row[1]
-            value_green = row[2]
-            value_blue = row[3]
+            value_red = int(row[1])
+            value_green = int(row[2])
+            value_blue = int(row[3])
 
             value = (value_red, value_green, value_blue)
 
@@ -259,13 +259,16 @@ def build_image_using_palette(img_fname, palette_dict):
             x_squared = x**2
             y_squared = y**2
             abs_x_sq_and_y_sq = abs(x_squared - y_squared)
-            multiply = 2(x*y)
+            multiply = 2*(x*y)
             addition = multiply + abs_x_sq_and_y_sq
-            square_root = int(sqr(addition))
+            square_root = int(sqrt(addition))
             final_calc = square_root % 355
 
 
-            my_image_pixels[x, y] = pixel_color
+            RGB_intensity = palette_dict[final_calc]
+
+
+            my_image_pixels[x, y] = RGB_intensity
 
     print(f'saving {img_fname}')
     my_image.save(img_fname, 'png')
