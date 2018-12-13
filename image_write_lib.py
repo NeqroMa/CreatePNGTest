@@ -103,7 +103,7 @@ def build_image_single_red_gradient(img_fname):
 
     for x in range(image_x_size_loaded):
         for y in range(image_y_size_loaded):
-            red_intensity = 255 if x>256 else x
+            red_intensity = int(x / 2)
 
 
             pixel_color = ( red_intensity, 0, 0)
@@ -151,7 +151,27 @@ def build_image_cyan_gradient_diagonal(img_fname):
     Consider what the value of x+y is at the top left and at the
     bottom right
     """
-    pass
+    my_image = Image.new('RGB', (512,512))
+    my_image_pixels = my_image.load()
+
+    image_x_size_loaded = my_image.size[0]
+    image_y_size_loaded = my_image.size[1]
+
+
+    for x in range(image_x_size_loaded):
+        for y in range(image_y_size_loaded):
+            blue_intensity = int(x/2+y/2)
+            green_intensity = int(x/2+y/2)
+            # red_intensity = 255 if x<255 else x
+            # green_intensity = 255 if x>255 else x
+
+            pixel_color = ( 0, green_intensity, blue_intensity)
+
+            my_image_pixels[x, y] = pixel_color
+
+    print(f'saving {img_fname}')
+    my_image.save(img_fname, 'png')
+
 
 def build_image_green_gradient_diagonal_inverted(img_fname):
     """
@@ -223,6 +243,17 @@ def build_palette_dictionary(palette_fname):
     return my_palette_dict
 
 
+def do_calculation_for_palette(x,y):
+    x_squared = x**2
+    y_squared = y**2
+    abs_x_sq_and_y_sq = abs(x_squared - y_squared)
+    multiply = 2*(x*y)
+    addition = multiply + abs_x_sq_and_y_sq
+    square_root = int(sqrt(addition))
+    final_calc = square_root % 355
+    return final_calc
+
+
 def build_image_using_palette(img_fname, palette_dict):
     """
     TROPHY
@@ -256,13 +287,7 @@ def build_image_using_palette(img_fname, palette_dict):
     for x in range(image_x_size_loaded):
         for y in range(image_y_size_loaded):
 
-            x_squared = x**2
-            y_squared = y**2
-            abs_x_sq_and_y_sq = abs(x_squared - y_squared)
-            multiply = 2*(x*y)
-            addition = multiply + abs_x_sq_and_y_sq
-            square_root = int(sqrt(addition))
-            final_calc = square_root % 355
+            final_calc = do_calculation_for_palette(x,y)
 
 
             RGB_intensity = palette_dict[final_calc]
