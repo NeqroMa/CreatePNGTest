@@ -13,6 +13,7 @@ images whose size is not predetermined/hardcoded.
 from PIL import Image
 import csv
 from math import sqrt
+from numba import jit
 
 def build_an_image_example(img_fname):
     """
@@ -160,8 +161,8 @@ def build_image_cyan_gradient_diagonal(img_fname):
 
     for x in range(image_x_size_loaded):
         for y in range(image_y_size_loaded):
-            blue_intensity = int(x/2+y/2)
-            green_intensity = int(x/2+y/2)
+            blue_intensity = int((x+y)/4)
+            green_intensity = int((x+y)/4)
             # red_intensity = 255 if x<255 else x
             # green_intensity = 255 if x>255 else x
 
@@ -179,7 +180,25 @@ def build_image_green_gradient_diagonal_inverted(img_fname):
     This is similar to build_image_cyan_gradient_diagonal except
     green and the 255 is top left and 0 is bottom right.
     """
-    pass
+    my_image = Image.new('RGB', (512,512))
+    my_image_pixels = my_image.load()
+
+    image_x_size_loaded = my_image.size[0]
+    image_y_size_loaded = my_image.size[1]
+
+
+    for x in range(image_x_size_loaded):
+        for y in range(image_y_size_loaded):
+            green_intensity = 255-int((x+y)/4)
+            # red_intensity = 255 if x<255 else x
+            # green_intensity = 255 if x>255 else x
+
+            pixel_color = ( 0, green_intensity, 0)
+
+            my_image_pixels[x, y] = pixel_color
+
+    print(f'saving {img_fname}')
+    my_image.save(img_fname, 'png')
 
 def build_image_red_bands_horizontal(img_fname):
     """
@@ -189,7 +208,22 @@ def build_image_red_bands_horizontal(img_fname):
     Each red horizontal bar is 10 pixels tall.
     Each black horizontal bare is also 10 pixels tall
     """
-    pass
+    my_image = Image.new('RGB', (512,512))
+    my_image_pixels = my_image.load()
+
+    image_x_size_loaded = my_image.size[0]
+    image_y_size_loaded = my_image.size[1]
+
+    for x in range(image_x_size_loaded):
+        for y in range(image_y_size_loaded):
+            red_intensity = 255 if y % 20 in range(10) else 0
+            # red_intensity = int(x+ 2*y) % 255
+            pixel_color = ( red_intensity, 0, 0)
+
+            my_image_pixels[x, y] = pixel_color
+
+    print(f'saving {img_fname}')
+    my_image.save(img_fname, 'png')
 
 def build_image_blue_bands_vertical(img_fname):
     """
@@ -243,14 +277,33 @@ def build_palette_dictionary(palette_fname):
     return my_palette_dict
 
 
-def do_calculation_for_palette(x,y):
+@jit
+def do_calculation(complex_num, complex_seed):
+    squared_complex = complex_num * complex_num
+    squared_complex_plus_seed = squared_complex + complex_seed
+    return squared_complex_plus_seed
+
+
+@jit
+def do_iteration(complex_num, complex_seed):
+    new_complex_num = do_calculation(complex_num, complex_seed)
+    for i in range(255):
+        if new_complex_num.real**2 + new_complex_num.imag**2 > 4:
+            break
+        else:
+            new_complex_num = do_calculation(new_complex_num, complex_seed)
+    return(i)
+
+
+
+def do_calculation_for_palette(x,y,dict_max):
     x_squared = x**2
     y_squared = y**2
     abs_x_sq_and_y_sq = abs(x_squared - y_squared)
     multiply = 2*(x*y)
     addition = multiply + abs_x_sq_and_y_sq
     square_root = int(sqrt(addition))
-    final_calc = square_root % 355
+    final_calc = square_root % (dict_max + 1)
     return final_calc
 
 
@@ -277,23 +330,31 @@ def build_image_using_palette(img_fname, palette_dict):
     Now, using the value, find the RGB color in the palette.  Set the
     pixel to that color
     """
-    my_image = Image.new('RGB', (512,512))
+    my_image = Image.new('RGB', (1400,800))
     my_image_pixels = my_image.load()
 
     image_x_size_loaded = my_image.size[0]
     image_y_size_loaded = my_image.size[1]
 
-
+    # dict_max = max(palette_dict)
     for x in range(image_x_size_loaded):
         for y in range(image_y_size_loaded):
+            big_x_onto_small_x = (3.5/1400)*x - 2.5
+            big_y_onto_small_y = (2/800)*y - 1
 
-            final_calc = do_calculation_for_palette(x,y)
+            z = big_x_onto_small_x + big_y_onto_small_y*1j
+            z0 = z
+
+            z_calc = do_iteration(z,z0)
+
+            # final_calc = do_calculation_for_palette(x,y,dict_max)
 
 
-            RGB_intensity = palette_dict[final_calc]
-
+            # RGB_intensity = palette_dict[final_calc]
+            RGB_intensity = palette_dict[z_calc]
 
             my_image_pixels[x, y] = RGB_intensity
+
 
     print(f'saving {img_fname}')
     my_image.save(img_fname, 'png')
